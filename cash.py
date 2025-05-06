@@ -1,42 +1,25 @@
-import re
+import csv
 
-# Predefined menu with prices
-MENU = {
-    "coffee": 3.5,
-    "sandwich": 5.0,
-    "muffin": 2.25,
-    "cookie": 1.25,
-    "tea": 2.0
-}
-
-def parse_input_line(line):
-    """
-    Parses lines like 'coffee x3' or 'muffin' and returns (item, quantity)
-    """
-    line = line.strip().lower()
-    match = re.match(r"^([a-z\s]+)(?:\s*x(\d+))?$", line)
-    if not match:
-        return None, None
-    item = match.group(1).strip()
-    quantity = int(match.group(2)) if match.group(2) else 1
-    return item, quantity
-
-def read_orders_from_input():
+def read_orders_from_csv(file_path):
     orders = []
-    print("Enter items (e.g., 'coffee x2', 'muffin'). Type 'done' to finish:")
-    while True:
-        line = input("> ").strip()
-        if line.lower() == "done":
-            break
-        item, quantity = parse_input_line(line)
-        if item is None or item not in MENU:
-            print("Invalid item or format. Please try again.")
-            continue
-        orders.append({
-            "item": item,
-            "price": MENU[item],
-            "quantity": quantity
-        })
+    with open(file_path, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if len(row) != 3:
+                print(f"Invalid row format: {row}")
+                continue
+            item = row[0].strip().lower()
+            try:
+                price = float(row[1])
+                quantity = int(row[2])
+            except ValueError:
+                print(f"Invalid price or quantity in row: {row}")
+                continue
+            orders.append({
+                "item": item,
+                "price": price,
+                "quantity": quantity
+            })
     return orders
 
 def calculate_totals(orders):
@@ -68,9 +51,10 @@ def write_output(file_path, total_items, subtotal, tax, grand_total):
         file.write(f"Grand Total: ${grand_total:.2f}\n")
 
 def main():
-    orders = read_orders_from_input()
+    input_file = "orders.csv"
+    orders = read_orders_from_csv(input_file)
     if not orders:
-        print("No orders entered.")
+        print("No valid orders found in the CSV.")
         return
     total_items, subtotal, tax, grand_total = calculate_totals(orders)
     display_summary(total_items, subtotal, tax, grand_total)
